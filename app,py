@@ -1,1 +1,164 @@
+import streamlit as st
+import joblib
+import numpy as np
 
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="AI Predictive Maintenance System",
+    page_icon="⚙️",
+    layout="wide"
+)
+
+# ---------------- CUSTOM CSS ----------------
+st.markdown("""
+<style>
+
+.stApp {
+    background: linear-gradient(to right, #020024, #090979, #000000);
+    color: white;
+}
+
+/* Main title */
+.main-title {
+    font-size: 52px;
+    font-weight: bold;
+    text-align: center;
+    background: linear-gradient(90deg,#00DBDE,#FC00FF);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 10px;
+}
+
+/* Subtitle */
+.subtitle {
+    text-align: center;
+    font-size: 20px;
+    color: #cccccc;
+    margin-bottom: 40px;
+}
+
+/* Input boxes */
+.stNumberInput input {
+    background-color: #111111;
+    color: white;
+    border-radius: 10px;
+    border: 1px solid #444;
+}
+
+/* Select box */
+.stSelectbox div[data-baseweb="select"] {
+    background-color: #111111;
+    border-radius: 10px;
+}
+
+/* Button */
+.stButton>button {
+    width: 100%;
+    background: linear-gradient(to right, #8E2DE2, #4A00E0);
+    color: white;
+    border-radius: 12px;
+    height: 55px;
+    font-size: 20px;
+    font-weight: bold;
+    border: none;
+}
+
+.stButton>button:hover {
+    background: linear-gradient(to right, #FC00FF, #00DBDE);
+    color: white;
+}
+
+/* Prediction box */
+.result-box {
+    background-color: rgba(255,255,255,0.08);
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+    margin-top: 30px;
+    font-size: 30px;
+    font-weight: bold;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ---------------- LOAD MODELS ----------------
+crankshaft_model = joblib.load("crankshaft_model.pkl")
+gear_model = joblib.load("gear_model.pkl")
+gearshaft_model = joblib.load("gearshaft_model.pkl")
+bearing_model = joblib.load("bearing_model.pkl")
+
+# ---------------- TITLES ----------------
+st.markdown(
+    '<div class="main-title">AI Predictive Maintenance System</div>',
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    '<div class="subtitle">ANSYS + Machine Learning Based Mechanical Failure Prediction Platform</div>',
+    unsafe_allow_html=True
+)
+
+# ---------------- COMPONENT SELECT ----------------
+component = st.selectbox(
+    "Select Mechanical Component",
+    ["Crankshaft", "Gear", "Gear Shaft", "Bearing"]
+)
+
+# ---------------- INPUTS ----------------
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    load = st.number_input("Load / Torque")
+
+with col2:
+    tot_def = st.number_input("Total Deformation")
+
+with col3:
+    direct_def = st.number_input("Directional Deformation")
+
+col4, col5, col6 = st.columns(3)
+
+with col4:
+    eqv_str = st.number_input("Equivalent Elastic Strain")
+
+with col5:
+    eqv_stress = st.number_input("Equivalent Stress")
+
+with col6:
+    str_energy = st.number_input("Strain Energy")
+
+# ---------------- PREDICT BUTTON ----------------
+if st.button("Predict Condition"):
+
+    sample = np.array([[
+        load,
+        tot_def,
+        direct_def,
+        eqv_str,
+        eqv_stress,
+        str_energy
+    ]])
+
+    # MODEL SELECTION
+    if component == "Crankshaft":
+        prediction = crankshaft_model.predict(sample)
+
+    elif component == "Gear":
+        prediction = gear_model.predict(sample)
+
+    elif component == "Gear Shaft":
+        prediction = gearshaft_model.predict(sample)
+
+    else:
+        prediction = bearing_model.predict(sample)
+
+    # RESULT DISPLAY
+    st.markdown(
+        f'''
+        <div class="result-box">
+            Predicted Condition: {prediction[0]}
+        </div>
+        ''',
+        unsafe_allow_html=True
+    )
